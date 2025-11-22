@@ -24,7 +24,7 @@ func (s *TeamsService) Create(teamName string, members []entities.User) (*entiti
 	tx := s.db.Begin()
 
 	newTeam := entities.Team{
-		TeamName: teamName,
+		Name: teamName,
 	}
 
 	// omitting members so we can create them manually.
@@ -65,7 +65,7 @@ func (s *TeamsService) Create(teamName string, members []entities.User) (*entiti
 func (s *TeamsService) Get(teamName string) (*entities.Team, error) {
 	team, err := gorm.
 		G[entities.Team](s.db).
-		Where("team_name = ?", teamName).
+		Where("name = ?", teamName).
 		Preload("Members", nil).
 		First(s.ctx)
 

@@ -23,12 +23,12 @@ func TestTeamsService_CreateAndGet(t *testing.T) {
 
 	team, err := teams.Create("TeamA", members)
 	assert.NoError(t, err)
-	assert.Equal(t, "TeamA", team.TeamName)
+	assert.Equal(t, "TeamA", team.Name)
 	assert.Len(t, team.Members, 2)
 
 	team, err = teams.Get("TeamA")
 	assert.NoError(t, err)
-	assert.Equal(t, "TeamA", team.TeamName)
+	assert.Equal(t, "TeamA", team.Name)
 	assert.Len(t, team.Members, 2)
 }
 
