@@ -1,3 +1,19 @@
+# Интеграционные тесты
+Для запуска интеграционных тестов используется `docker-compose.tests.yaml` файл с БД и тесты из `tests/integration`
+
+Команды запуска:
+```sh
+./run_integration_tests.sh
+
+# Либо же можно запустить в несколько команд
+# Старт тестовой БД
+docker compose -f docker-compose.tests.yaml up --build -d --wait
+# Запуск тестов
+go test ./tests/integration
+# Остановить тестовую БД
+docker compose -f docker-compose.tests.yaml down -v
+```
+
 # Выбранные решения
 ## Собственная библиотека для цепочки хендлеров
 В проекте использована моя библиотека [stackable](https://pkg.go.dev/github.com/saryginrodion/stackable) для цепочки хендлеров реквестов (работает как некий аналог `express.js`)
