@@ -8,10 +8,19 @@ import (
 )
 
 func Migrate(db *gorm.DB, ctx context.Context) error {
-	err := db.AutoMigrate(&entities.Team{}, &entities.User{})
-
+	db.DisableForeignKeyConstraintWhenMigrating = true
+	err := db.AutoMigrate(&entities.Team{})
 	if err != nil {
 		return err
+	}
+
+	err = db.AutoMigrate(&entities.User{})
+	if err != nil {
+		return err
+	}
+
+	if !db.Migrator().HasConstraint(&entities.User{}, "TeamName") {
+		db.Migrator().CreateConstraint(&entities.User{}, "TeamName")
 	}
 
 	return nil
