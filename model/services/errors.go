@@ -21,3 +21,17 @@ type ErrTeamExists struct {
 func (e *ErrTeamExists) Error() string {
 	return fmt.Sprintf("%s already exists", e.TeamName)
 }
+
+type ErrPullRequestExists struct {
+	PullRequestID string
+}
+
+func (e *ErrPullRequestExists) Error() string {
+	return fmt.Sprintf("%s already exists", e.PullRequestID)
+}
+
+type ErrNoCandidates struct{}
+
+func (e *ErrNoCandidates) Error() string {
+	return "not enough candidates found to assignation"
+}
