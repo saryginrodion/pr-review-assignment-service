@@ -13,6 +13,14 @@ docker compose up --build
 # .env
 Переменные окружения которые можно настроить содержатся в `.env.example`
 
+# Стресс-тесты
+Для стресс-тестов использовался [locust](https://locust.io/) (файл тестов можно посмотреть в `tests/benchmarks`)
+
+Графики тестов (230+- RPS, проведено на моем компьютере, сервис был поднят с помощью `docker compose up --build`, база данных полностью чистая)
+
+<img width="2566" height="1754" alt="image" src="https://github.com/user-attachments/assets/055db668-7a99-4488-b8e2-e917990ff14c" />
+
+
 # Интеграционные тесты
 Для запуска интеграционных тестов используется `tests.docker-compose.yaml` файл с БД и тесты из `tests/integration`
 
