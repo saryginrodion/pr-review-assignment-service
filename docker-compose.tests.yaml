@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: tests
     ports:
       - "15432:5432"
+    volumes:
+      - .volumes/postgres-tests:/usr/local/pgsql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tests -d tests"]
       interval: 2s

@@ -9,8 +9,6 @@ import (
 )
 
 func HttpServer(stack stackable.Stackable[context.SharedState, context.LocalState], addr string) *http.Server {
-	http.Handle("GET /", stack.AddUniqueHandler(routes.GetIndex))
-
 	// Teams
 	http.Handle("POST /team/add", stack.AddUniqueHandler(routes.TeamAdd))
 	http.Handle("GET /team/get", stack.AddUniqueHandler(routes.TeamGet))
@@ -22,6 +20,9 @@ func HttpServer(stack stackable.Stackable[context.SharedState, context.LocalStat
 	// Pull requests
 	http.Handle("POST /pullRequest/create", stack.AddUniqueHandler(routes.PullRequestCreate))
 	http.Handle("POST /pullRequest/merge", stack.AddUniqueHandler(routes.PullRequestMerge))
+	http.Handle("POST /pullRequest/reassign", stack.AddUniqueHandler(routes.PullRequestReassign))
+
+	http.Handle("/", stack.AddUniqueHandler(routes.GetIndex))
 
 	s := &http.Server{
 		Addr: addr,

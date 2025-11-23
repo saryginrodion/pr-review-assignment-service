@@ -31,7 +31,7 @@ var TeamAdd = stackable.WrapFunc(
 		}
 
 		ctx.Response, _ = stackable.JsonResponse(
-			http.StatusOK,
+			http.StatusCreated,
 			schemas.ToTeam(*team),
 		)
 

@@ -290,3 +290,35 @@ func TestPullRequestReassignMerged(t *testing.T) {
 	_, ok := err.(*services.ErrPullRequestMerged)
 	assert.True(t, ok)
 }
+
+func TestPullRequestReassignReviewerNotExists(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	// Создаем команду и пользователей
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ID: "author", Username: "author", TeamName: "TeamA", IsActive: true},
+		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
+		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
+		{ID: "rev3", Username: "rev2", TeamName: "TeamA", IsActive: true},
+		{ID: "rev4", Username: "rev2", TeamName: "TeamA", IsActive: true},
+	})
+
+	users := services.NewUsersService(db, context.Background())
+	author, err := users.Get("author")
+	assert.NoError(t, err)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	pr, err := prs.Create("pr-reassign-not-assigned", "PR Reassign Test", *author)
+	assert.NoError(t, err)
+
+	nonAssignedReviewerID := "author"
+
+	_, err = prs.Reassign(pr.ID, []string{nonAssignedReviewerID})
+	assert.Error(t, err)
+
+	_, ok := err.(*services.ErrNotFound)
+	assert.True(t, ok)
+}
+

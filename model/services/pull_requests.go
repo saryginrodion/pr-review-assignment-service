@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/saryginrodion/pr_review_assignment_service/model/entities"
+	"github.com/saryginrodion/pr_review_assignment_service/utils"
 	"gorm.io/gorm"
 )
 
@@ -185,8 +186,25 @@ func (s *PullRequestsService) Reassign(pullRequestID string, oldReviewerIDs []st
 		return nil, err
 	}
 
+	// Pull request не смерджен
 	if pr.Status == entities.PULL_REQUEST_MERGED {
 		return nil, &ErrPullRequestMerged{}
+	}
+
+
+	// Проверяем, что ревьювер действительно есть в assigned reviewers
+	assignedReviwersIDs := utils.MapSlice(
+		func(rev entities.User) string { return rev.ID },
+		pr.AssignedReviewers,
+	)
+
+	filteredOldReviewerIDs := utils.FilterSlice(
+		func(id string) bool { return slices.Contains(assignedReviwersIDs, id) },
+		oldReviewerIDs,
+	)
+
+	if len(filteredOldReviewerIDs) != len(oldReviewerIDs) {
+		return nil, &ErrNotFound{}
 	}
 
 	tx := s.db.Begin()

@@ -30,7 +30,7 @@ var PullRequestCreate = stackable.WrapFunc(
 		}
 
 		ctx.Response, _ = stackable.JsonResponse(
-			http.StatusOK,
+			http.StatusCreated,
 			schemas.ToPullRequest(*pr),
 		)
 
@@ -47,6 +47,28 @@ var PullRequestMerge = stackable.WrapFunc(
 
 		prs := services.NewPullRequestsService(ctx.Shared.DB, ctx.Request.Context())
 		pr, err := prs.Merge(body.PullRequetsID)
+		if err != nil {
+			return err
+		}
+
+		ctx.Response, _ = stackable.JsonResponse(
+			http.StatusOK,
+			schemas.ToPullRequest(*pr),
+		)
+
+		return next()
+	},
+)
+
+var PullRequestReassign = stackable.WrapFunc(
+	func(ctx *context.Context, next func() error) error {
+		body, err := apiUtils.ParseAndValidateJson(ctx.Request.Body, schemas.PullRequestReassignBody{})
+		if err != nil {
+			return err
+		}
+
+		prs := services.NewPullRequestsService(ctx.Shared.DB, ctx.Request.Context())
+		pr, err := prs.Reassign(body.PullRequestID, []string{body.OldReviewerID})
 		if err != nil {
 			return err
 		}
