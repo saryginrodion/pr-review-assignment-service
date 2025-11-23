@@ -31,11 +31,11 @@ docker compose up --build
 
 # Либо же можно запустить в несколько команд
 # Старт тестовой БД
-docker compose -f docker-compose.tests.yaml up --build -d --wait
+docker compose -f tests.docker-compose.yaml up --build -d --wait
 # Запуск тестов
 go test ./tests/integration
 # Остановить тестовую БД
-docker compose -f docker-compose.tests.yaml down -v
+docker compose -f tests.docker-compose.yaml down -v
 ```
 
 # Выбранные решения
