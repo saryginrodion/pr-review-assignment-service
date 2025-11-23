@@ -4,13 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/saryginrodion/pr_review_assignment_service/model/entities"
 	"github.com/saryginrodion/pr_review_assignment_service/model/services"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUserSetActive(t *testing.T) {
 	db := SetupTestDB(t)
-	SetupTeamAUser1(db, t)
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ ID: "user1", Username: "username", IsActive: true },
+	})
 	defer CleanUpDb(db)
 
 
@@ -29,7 +32,9 @@ func TestUserSetActive(t *testing.T) {
 
 func TestUserSetActiveNotExists(t *testing.T) {
 	db := SetupTestDB(t)
-	SetupTeamAUser1(db, t)
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ ID: "user1", Username: "username", IsActive: true },
+	})
 	defer CleanUpDb(db)
 
 	users := services.NewUsersService(db, context.Background())

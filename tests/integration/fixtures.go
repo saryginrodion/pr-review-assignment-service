@@ -33,18 +33,18 @@ func CleanUpDb(db *gorm.DB) {
 	db.Migrator().DropTable(entities.User{}, entities.Team{})
 }
 
-// Setups team with name "TeamA" and user with id "user1"
-func SetupTeamAUser1(db *gorm.DB, t *testing.T) {
+func SetupTeamAndUsers(
+	db *gorm.DB,
+	t *testing.T,
+	teamName string,
+	users []entities.User,
+) {
 	ctx := context.Background()
 	teams := services.NewTeamsService(db, ctx)
 
-	members := []entities.User{
-		{ID: "user1", Username: "Alice", IsActive: true},
-	}
-
-	team, err := teams.Create("TeamA", members)
+	team, err := teams.Create(teamName, users)
 	assert.NoError(t, err)
-	assert.Equal(t, "TeamA", team.Name)
-	assert.Len(t, team.Members, 1)
+	assert.Equal(t, teamName, team.Name)
+	assert.Len(t, team.Members, len(users))
 }
 
