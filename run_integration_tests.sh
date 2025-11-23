@@ -1,4 +1,4 @@
 docker compose -f docker-compose.tests.yaml down -v
 docker compose -f docker-compose.tests.yaml up --build -d --wait
-go test -v ./tests/integration
+go test ./tests/integration
 docker compose -f docker-compose.tests.yaml down -v

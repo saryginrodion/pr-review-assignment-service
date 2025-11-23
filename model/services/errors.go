@@ -35,3 +35,9 @@ type ErrNoCandidates struct{}
 func (e *ErrNoCandidates) Error() string {
 	return "not enough candidates found to assignation"
 }
+
+type ErrPullRequestMerged struct{}
+
+func (e *ErrPullRequestMerged) Error() string {
+	return "cannot reassign on merged PR"
+}

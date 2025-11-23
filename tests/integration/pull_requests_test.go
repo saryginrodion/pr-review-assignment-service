@@ -38,8 +38,6 @@ func TestPullRequestCreate(t *testing.T) {
 	for _, r := range pr.AssignedReviewers {
 		assert.NotEqual(t, "author", r.ID)
 	}
-
-	t.Log("PR:", pr)
 }
 
 func TestPullRequestCreateDuplicate(t *testing.T) {
@@ -167,4 +165,128 @@ func TestPullRequestMergeNotFound(t *testing.T) {
 
 	_, err := prs.Merge("does_not_exist")
 	assert.Error(t, err)
+}
+
+func TestPullRequestReassignSuccess(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ID: "author", Username: "author", TeamName: "TeamA", IsActive: true},
+		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
+		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
+		{ID: "rev3", Username: "rev3", TeamName: "TeamA", IsActive: true},
+		{ID: "rev4", Username: "rev3", TeamName: "TeamA", IsActive: true},
+	})
+
+	users := services.NewUsersService(db, context.Background())
+	author, err := users.Get("author")
+	assert.NoError(t, err)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	// Создаем PR
+	pr, err := prs.Create("pr-reassign", "PR Reassign", *author)
+	assert.NoError(t, err)
+	assert.Len(t, pr.AssignedReviewers, 2)
+
+	oldReviewerIDs := []string{pr.AssignedReviewers[0].ID}
+
+	// Делаем Reassign
+	updatedPR, err := prs.Reassign("pr-reassign", oldReviewerIDs)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(updatedPR.AssignedReviewers))
+
+	// Проверяем, что старый ревьювер заменен новым
+	foundOld := false
+	for _, r := range updatedPR.AssignedReviewers {
+		if r.ID == oldReviewerIDs[0] {
+			foundOld = true
+		}
+	}
+	assert.False(t, foundOld, "Old reviewer should be replaced")
+
+	for _, r := range updatedPR.AssignedReviewers {
+		assert.NotEqual(t, "author", r.ID)
+		assert.True(t, r.LastAssignedAt.Valid)
+		assert.WithinDuration(t, time.Now(), r.LastAssignedAt.Time, time.Second*2)
+	}
+}
+
+func TestPullRequestReassignNoCandidates(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ID: "author", Username: "author", TeamName: "TeamA", IsActive: true},
+		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
+		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
+	})
+
+	users := services.NewUsersService(db, context.Background())
+	author, err := users.Get("author")
+	assert.NoError(t, err)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	// Создаем PR с одним ревьювером (его потом попытаемся переназначить)
+	pr, err := prs.Create("pr-no-candidates", "PR No Candidates", *author)
+	assert.NoError(t, err)
+
+	oldReviewerIDs := []string{pr.AssignedReviewers[0].ID}
+
+	// Попытка Reassign должна вернуть ErrNoCandidates
+	_, err = prs.Reassign("pr-no-candidates", oldReviewerIDs)
+	assert.Error(t, err)
+	_, ok := err.(*services.ErrNoCandidates)
+	assert.True(t, ok)
+}
+
+func TestPullRequestReassignNotFound(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	_, err := prs.Reassign("non-existent-pr", []string{"rev1"})
+	assert.Error(t, err)
+	_, ok := err.(*services.ErrNotFound)
+	assert.True(t, ok)
+}
+
+func TestPullRequestReassignMerged(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ID: "author", Username: "author", TeamName: "TeamA", IsActive: true},
+		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
+		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
+		{ID: "rev3", Username: "rev3", TeamName: "TeamA", IsActive: true},
+		{ID: "rev4", Username: "rev3", TeamName: "TeamA", IsActive: true},
+	})
+
+	users := services.NewUsersService(db, context.Background())
+	author, err := users.Get("author")
+	assert.NoError(t, err)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	// Создаем PR
+	pr, err := prs.Create("pr-reassign", "PR Reassign", *author)
+	assert.NoError(t, err)
+	assert.Len(t, pr.AssignedReviewers, 2)
+
+	oldReviewerIDs := []string{pr.AssignedReviewers[0].ID}
+
+	// Мерджим
+	pr, err = prs.Merge(pr.ID)
+	assert.NoError(t, err)
+
+	// Пытаемся сделать reassign
+	_, err = prs.Reassign("pr-reassign", oldReviewerIDs)
+	assert.Error(t, err)
+
+	_, ok := err.(*services.ErrPullRequestMerged)
+	assert.True(t, ok)
 }
