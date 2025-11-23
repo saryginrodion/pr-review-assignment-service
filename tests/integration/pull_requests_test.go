@@ -143,6 +143,9 @@ func TestPullRequestMerge(t *testing.T) {
 	assert.True(t, mergedPR.MergedAt.Valid)
 	// Проверяем время, чтоб ПР смерджился +- в пределах 2 секунд
 	assert.WithinDuration(t, time.Now(), mergedPR.MergedAt.Time, time.Second*2)
+	assert.Equal(t, len(mergedPR.AssignedReviewers), 2)
+	assert.True(t, mergedPR.AssignedReviewers[0].LastAssignedAt.Valid)
+	assert.WithinDuration(t, mergedPR.AssignedReviewers[0].LastAssignedAt.Time, time.Now(), time.Second*4)
 
 	// Проверяем что реквест все это действительно теперь лежит в БД
 	pr, err = prs.GetFull("pr-merge")
