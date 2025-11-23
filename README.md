@@ -3,8 +3,8 @@
 ```sh
 docker compose up --build
 ```
-Эта команда поднимает БД (Postgres), и запускает проект на [localhost:8000/](localhost:8000/)
-Также сразу же доступен swagger: [localhost:8000/swagger](localhost:8000/swagger)
+Эта команда поднимает БД (Postgres), и запускает проект на [http://localhost:8000/](http://localhost:8000/)
+Также сразу же доступен swagger: [http://localhost:8000/swagger](http://localhost:8000/swagger)
 
 # Билд
 Сбилдить проект можно скриптом `./build.sh`
