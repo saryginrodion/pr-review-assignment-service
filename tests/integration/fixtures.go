@@ -26,6 +26,8 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 		t.Fatalf("failed to migrate database: %v", err)
 	}
 
+	db = db.Debug()
+
 	return db
 }
 

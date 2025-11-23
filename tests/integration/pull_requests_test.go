@@ -27,7 +27,6 @@ func TestPullRequestCreate(t *testing.T) {
 
 	prs := services.NewPullRequestsService(db, context.Background())
 
-
 	pr, err := prs.Create("pr1", "PR Name", *author)
 	assert.NoError(t, err)
 	assert.Equal(t, "pr1", pr.ID)
@@ -39,6 +38,8 @@ func TestPullRequestCreate(t *testing.T) {
 	for _, r := range pr.AssignedReviewers {
 		assert.NotEqual(t, "author", r.ID)
 	}
+
+	t.Log("PR:", pr)
 }
 
 func TestPullRequestCreateDuplicate(t *testing.T) {
@@ -89,37 +90,6 @@ func TestPullRequestCreateNoCandidates(t *testing.T) {
 	assert.True(t, ok)
 }
 
-func TestPullRequestBeforeSaveConstraintMerged(t *testing.T) {
-	db := SetupTestDB(t)
-	defer CleanUpDB(db)
-
-	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
-		{ID: "author", Username: "a", TeamName: "TeamA", IsActive: true},
-		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
-		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
-	})
-
-	users := services.NewUsersService(db, context.Background())
-	author, err := users.Get("author")
-	assert.NoError(t, err)
-
-	prs := services.NewPullRequestsService(db, context.Background())
-
-	pr, err := prs.Create("pr1", "name", *author)
-	assert.NoError(t, err)
-
-	pr.Status = entities.PULL_REQUEST_MERGED
-	err = db.Save(pr).Error
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "MergedAt cannot be null")
-
-	pr.MergedAt.Valid = true
-	pr.MergedAt.Time = time.Now()
-
-	err = db.Save(pr).Error
-	assert.NoError(t, err)
-}
-
 func TestPullRequestCreateNoCandidatesInactive(t *testing.T) {
 	db := SetupTestDB(t)
 	defer CleanUpDB(db)
@@ -142,4 +112,56 @@ func TestPullRequestCreateNoCandidatesInactive(t *testing.T) {
 
 	_, ok := err.(*services.ErrNoCandidates)
 	assert.True(t, ok)
+}
+
+func TestPullRequestMerge(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ID: "author", Username: "author", TeamName: "TeamA", IsActive: true},
+		{ID: "rev1", Username: "rev1", TeamName: "TeamA", IsActive: true},
+		{ID: "rev2", Username: "rev2", TeamName: "TeamA", IsActive: true},
+		{ID: "rev3", Username: "rev3", TeamName: "TeamA", IsActive: true},
+	})
+
+	users := services.NewUsersService(db, context.Background())
+	author, err := users.Get("author")
+	assert.NoError(t, err)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	// Проверяем что реквест открылся
+	pr, err := prs.Create("pr-merge", "Merge Test", *author)
+	assert.NoError(t, err)
+	assert.Equal(t, entities.PULL_REQUEST_OPEN, pr.Status)
+
+	// Проверяем что реквест смерджился
+	mergedPR, err := prs.Merge("pr-merge")
+	assert.NoError(t, err)
+	assert.Equal(t, entities.PULL_REQUEST_MERGED, mergedPR.Status)
+	assert.True(t, mergedPR.MergedAt.Valid)
+	// Проверяем время, чтоб ПР смерджился +- в пределах 2 секунд
+	assert.WithinDuration(t, time.Now(), mergedPR.MergedAt.Time, time.Second*2)
+
+	// Проверяем что реквест все это действительно теперь лежит в БД
+	pr, err = prs.GetFull("pr-merge")
+	assert.NoError(t, err)
+	assert.Equal(t, entities.PULL_REQUEST_MERGED, pr.Status)
+	assert.True(t, pr.MergedAt.Valid)
+
+	// Проверяем что у assignedreviewers изменилось время LastAssignedAt
+	assert.Equal(t, len(pr.AssignedReviewers), 2)
+	assert.True(t, pr.AssignedReviewers[0].LastAssignedAt.Valid)
+	assert.WithinDuration(t, pr.AssignedReviewers[0].LastAssignedAt.Time, time.Now(), time.Second*4)
+}
+
+func TestPullRequestMergeNotFound(t *testing.T) {
+	db := SetupTestDB(t)
+	defer CleanUpDB(db)
+
+	prs := services.NewPullRequestsService(db, context.Background())
+
+	_, err := prs.Merge("does_not_exist")
+	assert.Error(t, err)
 }

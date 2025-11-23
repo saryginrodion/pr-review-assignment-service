@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/saryginrodion/pr_review_assignment_service/model/entities"
 	"gorm.io/gorm"
@@ -20,11 +22,29 @@ func NewPullRequestsService(db *gorm.DB, ctx context.Context) PullRequestsServic
 	}
 }
 
+func (s *PullRequestsService) GetFull(pullRequestID string) (*entities.PullRequest, error) {
+	var pr entities.PullRequest
+
+	err := s.db.
+		Preload("Author").
+		Preload("AssignedReviewers").
+		First(&pr, "id = ?", pullRequestID).
+		Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, &ErrNotFound{}
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &pr, nil
+}
+
 func (s *PullRequestsService) GetUsersToAssign(
 	teamName string,
 	reviewersCount int,
 	excludeUserIDs []string,
-) (*[]entities.User, error) {
+) ([]entities.User, error) {
 	var users []entities.User
 
 	s.db.
@@ -44,7 +64,7 @@ func (s *PullRequestsService) GetUsersToAssign(
 		return nil, &ErrNoCandidates{}
 	}
 
-	return &users, nil
+	return users, nil
 }
 
 func (s *PullRequestsService) Create(pullRequestID string, pullRequestName string, author entities.User) (*entities.PullRequest, error) {
@@ -58,8 +78,8 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 		Status:   entities.PULL_REQUEST_OPEN,
 	}
 
-	err := tx.Model(&entities.PullRequest{}).Create(&newPR).Error
-
+	// Создаем PR без AssignedReviewers и без изменения Author
+	err := tx.Omit("Author").Create(&newPR).Error
 	if errors.Is(err, gorm.ErrDuplicatedKey) {
 		tx.Rollback()
 		return nil, &ErrPullRequestExists{
@@ -70,27 +90,72 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 		return nil, err
 	}
 
-
+	// Выбираем ревьюверов
 	prServiceTx := NewPullRequestsService(tx, s.ctx)
 	usersToAssign, err := prServiceTx.GetUsersToAssign(
 		newPR.Author.TeamName,
 		2,
 		[]string{author.ID},
 	)
-
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	newPR.AssignedReviewers = *usersToAssign
-	err = tx.Save(&newPR).Error
+	// Им присваивем time.Now() как last_assigned_at, и сохраняем их IDs для апдейта
+	now := time.Now()
+	usersToAssignIDs := make([]string, len(usersToAssign))
+	for i, user := range usersToAssign {
+		usersToAssign[i].LastAssignedAt.Time = now
+		usersToAssignIDs[i] = user.ID
+	}
 
+	// Апдейтим
+	err = tx.
+		Model(&entities.User{}).
+		Where("id in ?", usersToAssignIDs).
+		Update("last_assigned_at", now).
+		Error
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Присваеваем PR'у ревьюверов
+	err = tx.
+		Model(&newPR).
+		Association("AssignedReviewers").
+		Append(usersToAssign)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	tx.Commit()
-	return &newPR, nil
+
+	return &newPR, err
+}
+
+func (s *PullRequestsService) Merge(pullRequestID string) (*entities.PullRequest, error) {
+	err := s.db.Model(&entities.PullRequest{}).
+		Where("id = ?", pullRequestID).
+		Updates(&entities.PullRequest{
+			MergedAt: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			},
+			Status: entities.PULL_REQUEST_MERGED,
+		},
+		).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	pr, err := s.GetFull(pullRequestID)
+	if err != nil {
+		return nil, err
+	}
+
+	return pr, nil
 }
