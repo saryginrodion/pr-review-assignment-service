@@ -23,10 +23,10 @@ func Migrate(db *gorm.DB, ctx context.Context) error {
 		db.Migrator().CreateConstraint(&entities.User{}, "TeamName")
 	}
 
-	// err = db.AutoMigrate(&entities.PullRequest{})
-	// if err != nil {
-	// 	return err
-	// }
+	err = db.AutoMigrate(&entities.PullRequest{})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

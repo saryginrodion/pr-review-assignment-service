@@ -1,13 +1,14 @@
 package main
 
 import (
-	"context"
 	"log/slog"
 	"os"
 
+	"github.com/saryginrodion/pr_review_assignment_service/api"
+	"github.com/saryginrodion/pr_review_assignment_service/api/context"
+	"github.com/saryginrodion/pr_review_assignment_service/api/swaggerui"
 	"github.com/saryginrodion/pr_review_assignment_service/env"
 	"github.com/saryginrodion/pr_review_assignment_service/model/migrations"
-	"github.com/saryginrodion/pr_review_assignment_service/model/services"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdin, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	env := env.Env()
 
+	// Setting up DB
 	db, err := gorm.Open(postgres.Open(env.POSTGRES_DSN), &gorm.Config{
 		TranslateError: true,
 		Logger: slogGorm.New(
@@ -27,37 +29,22 @@ func main() {
 			slogGorm.SetLogLevel(slogGorm.DefaultLogType, slog.LevelDebug),
 		),
 	})
-
 	if err != nil {
-		logger.Error("Error on DB connection", "err", err)
+		slog.Error("Error on DB connection: ", "err", err)
+		os.Exit(1)
 	}
 
-	ctx := context.Background()
-	migrations.Migrate(db, ctx)
-
-	teams := services.NewTeamsService(db, ctx)
-	team, err := teams.Get("test_team0")
-	// team, err := teams.Create("test_team0", []entities.User{
-	// 	{
-	// 		ID:       "u1",
-	// 		Username: "Alice",
-	// 		IsActive: true,
-	// 	},
-	// 	{
-	// 		ID:       "u2",
-	// 		Username: "Bob",
-	// 		IsActive: true,
-	// 	},
-	// 	{
-	// 		ID:       "u3",
-	// 		Username: "Gorilka",
-	// 		IsActive: false,
-	// 	},
-	// })
-
-	if err != nil {
-		logger.Error("HUI", "err", err.Error())
-	} else {
-		logger.Info("Team:", "team", team)
+	if err := migrations.Migrate(db, db.Statement.Context); err != nil {
+		slog.Error("Failed on migrations: ", "err", err)
+		os.Exit(1)
 	}
+
+	stack := api.NewStack(&context.SharedState{
+		DB: db,
+		Logger: logger,
+	})
+	httpServer := api.HttpServer(stack, ":8000")
+	swaggerui.SetupSwaggerUI()
+	logger.Info("Starting server on :8000")
+	logger.Error("Error on ListenAndServe", "err", httpServer.ListenAndServe())
 }
