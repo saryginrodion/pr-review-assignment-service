@@ -6,7 +6,7 @@ type User struct {
 	UserID   string `json:"user_id" validate:"required,min=1"`
 	Username string `json:"username" validate:"required,min=1"`
 	TeamName string `json:"team_name" validate:"required,min=1"`
-	IsActive bool   `json:"is_active" validate:"required"`
+	IsActive bool   `json:"is_active"`
 }
 
 func ToUser(u entities.User) User {

@@ -5,7 +5,7 @@ import "github.com/saryginrodion/pr_review_assignment_service/model/entities"
 type TeamMember struct {
 	UserID   string `json:"user_id" validate:"required,min=1"`
 	Username string `json:"username" validate:"required,min=1"`
-	IsActive bool   `json:"is_active" validate:"required"`
+	IsActive bool   `json:"is_active"`
 }
 
 func ToTeamMember(u entities.User) TeamMember {
