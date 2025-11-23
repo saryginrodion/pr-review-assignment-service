@@ -31,3 +31,22 @@ var UserSetIsActive = stackable.WrapFunc(
 		return next()
 	},
 )
+
+var UserGetReviews = stackable.WrapFunc(
+	func (ctx *context.Context, next func() error) error {
+		userID := ctx.Request.URL.Query().Get("user_id")
+		users := services.NewUsersService(ctx.Shared.DB, ctx.Request.Context())
+
+		user, err := users.Get(userID)
+		if err != nil {
+			return err
+		}
+
+		ctx.Response, _ = stackable.JsonResponse(
+			http.StatusOK,
+			schemas.ToUserReviews(*user),
+		)
+		
+		return next()
+	},
+)

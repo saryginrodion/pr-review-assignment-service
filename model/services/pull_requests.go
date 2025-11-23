@@ -125,22 +125,24 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 }
 
 func (s *PullRequestsService) Merge(pullRequestID string) (*entities.PullRequest, error) {
-	err := s.db.Model(&entities.PullRequest{}).
-		Where("id = ?", pullRequestID).
-		Updates(&entities.PullRequest{
-			MergedAt: sql.NullTime{
-				Time:  time.Now(),
-				Valid: true,
-			},
-			Status: entities.PULL_REQUEST_MERGED,
-		},
-		).Error
-
+	pr, err := s.GetFull(pullRequestID)
 	if err != nil {
 		return nil, err
 	}
 
-	pr, err := s.GetFull(pullRequestID)
+	if pr.Status == entities.PULL_REQUEST_MERGED {
+		return pr, nil
+	}
+
+	pr.MergedAt = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	pr.Status = entities.PULL_REQUEST_MERGED
+
+	err = s.db.Save(pr).Error
+
 	if err != nil {
 		return nil, err
 	}

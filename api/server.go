@@ -17,6 +17,11 @@ func HttpServer(stack stackable.Stackable[context.SharedState, context.LocalStat
 
 	// Users
 	http.Handle("POST /users/setIsActive", stack.AddUniqueHandler(routes.UserSetIsActive))
+	http.Handle("GET /users/getReview", stack.AddUniqueHandler(routes.UserGetReviews))
+
+	// Pull requests
+	http.Handle("POST /pullRequest/create", stack.AddUniqueHandler(routes.PullRequestCreate))
+	http.Handle("POST /pullRequest/merge", stack.AddUniqueHandler(routes.PullRequestMerge))
 
 	s := &http.Server{
 		Addr: addr,

@@ -44,6 +44,8 @@ func (s *UsersService) Get(userID string) (*entities.User, error) {
 	err := s.db.
 		Model(&entities.User{}).
 		Where("id = ?", userID).
+		Preload("AssignedPullRequests").
+		Preload("Team").
 		First(&user).
 		Error
 
