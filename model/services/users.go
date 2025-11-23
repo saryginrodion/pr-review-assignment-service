@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/saryginrodion/pr_review_assignment_service/model/entities"
 	"gorm.io/gorm"
@@ -32,6 +33,24 @@ func (s *UsersService) SetIsActive(userId string, isActive bool) (*entities.User
 		return nil, &ErrNotFound{}
 	} else if res.Error != nil {
 		return nil, res.Error
+	}
+
+	return &user, nil
+}
+
+func (s *UsersService) Get(userID string) (*entities.User, error) {
+	var user entities.User
+
+	err := s.db.
+		Model(&entities.User{}).
+		Where("id = ?", userID).
+		First(&user).
+		Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, &ErrNotFound{}
+	} else if err != nil {
+		return nil, err
 	}
 
 	return &user, nil

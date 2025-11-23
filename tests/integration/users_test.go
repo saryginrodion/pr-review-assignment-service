@@ -9,6 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUserGet(t *testing.T) {
+	db := SetupTestDB(t)
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ ID: "user1", Username: "username", IsActive: true },
+	})
+	defer CleanUpDB(db)
+
+	users := services.NewUsersService(db, context.Background())
+	user, err := users.Get("user1")
+	assert.NoError(t, err)
+	assert.Equal(t, "user1", user.ID)
+}
+
+func TestUserNotFound(t *testing.T) {
+	db := SetupTestDB(t)
+	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
+		{ ID: "user1", Username: "username", IsActive: true },
+	})
+	defer CleanUpDB(db)
+
+	users := services.NewUsersService(db, context.Background())
+	_, err := users.Get("user_not_exists")
+	assert.Error(t, err)
+
+	_, ok := err.(*services.ErrNotFound)
+	assert.True(t, ok)
+}
+
 func TestUserSetActive(t *testing.T) {
 	db := SetupTestDB(t)
 	SetupTeamAndUsers(db, t, "TeamA", []entities.User{

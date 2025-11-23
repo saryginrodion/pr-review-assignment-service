@@ -24,12 +24,13 @@ func (s *PullRequestsService) GetUsersToAssign(
 	teamName string,
 	reviewersCount int,
 	excludeUserIDs []string,
-) ([]entities.User, error) {
+) (*[]entities.User, error) {
 	var users []entities.User
 
 	s.db.
 		Model(&entities.User{}).
 		Where("team_name = ?", teamName).
+		Where("is_active = ?", true).
 		Where("id NOT IN ?", excludeUserIDs).
 		Order("last_assigned_at ASC NULLS FIRST").
 		Limit(reviewersCount).
@@ -43,20 +44,21 @@ func (s *PullRequestsService) GetUsersToAssign(
 		return nil, &ErrNoCandidates{}
 	}
 
-	return users, nil
+	return &users, nil
 }
 
-func (s *PullRequestsService) Create(pullRequestID string, pullRequestName string, authorID string) (*entities.PullRequest, error) {
+func (s *PullRequestsService) Create(pullRequestID string, pullRequestName string, author entities.User) (*entities.PullRequest, error) {
 	tx := s.db.Begin()
 
 	newPR := entities.PullRequest{
-		ID:                pullRequestID,
-		Name:              pullRequestName,
-		AuthorID:          authorID,
-		Status:            entities.PULL_REQUEST_OPEN,
+		ID:       pullRequestID,
+		Name:     pullRequestName,
+		AuthorID: author.ID,
+		Author:   author,
+		Status:   entities.PULL_REQUEST_OPEN,
 	}
 
-	err := tx.Model(&entities.PullRequest{}).Preload("Author").Create(&newPR).Error
+	err := tx.Model(&entities.PullRequest{}).Create(&newPR).Error
 
 	if errors.Is(err, gorm.ErrDuplicatedKey) {
 		tx.Rollback()
@@ -68,11 +70,12 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 		return nil, err
 	}
 
+
 	prServiceTx := NewPullRequestsService(tx, s.ctx)
 	usersToAssign, err := prServiceTx.GetUsersToAssign(
 		newPR.Author.TeamName,
 		2,
-		[]string{newPR.AuthorID},
+		[]string{author.ID},
 	)
 
 	if err != nil {
@@ -80,7 +83,7 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 		return nil, err
 	}
 
-	newPR.AssignedReviewers = usersToAssign
+	newPR.AssignedReviewers = *usersToAssign
 	err = tx.Save(&newPR).Error
 
 	if err != nil {
@@ -88,5 +91,6 @@ func (s *PullRequestsService) Create(pullRequestID string, pullRequestName strin
 		return nil, err
 	}
 
+	tx.Commit()
 	return &newPR, nil
 }

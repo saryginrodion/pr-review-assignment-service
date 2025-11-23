@@ -30,7 +30,12 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 }
 
 func CleanUpDB(db *gorm.DB) {
-	db.Migrator().DropTable(entities.User{}, entities.Team{})
+	db.Migrator().DropTable(
+		entities.User{},
+		entities.Team{},
+		entities.PullRequest{},
+		"pr_assigned_reviewers",
+	)
 }
 
 func SetupTeamAndUsers(

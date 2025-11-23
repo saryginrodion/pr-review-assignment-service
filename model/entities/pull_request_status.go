@@ -5,8 +5,8 @@ import "database/sql/driver"
 type PullRequestStatus string
 
 const (
-	PULL_REQUEST_OPEN   = "OPEN"
-	PULL_REQUEST_MERGED = "MERGED"
+	PULL_REQUEST_OPEN   = PullRequestStatus("OPEN")
+	PULL_REQUEST_MERGED = PullRequestStatus("MERGED")
 )
 
 // From https://gorm.io/docs/data_types.html
