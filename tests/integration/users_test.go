@@ -14,7 +14,7 @@ func TestUserSetActive(t *testing.T) {
 	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
 		{ ID: "user1", Username: "username", IsActive: true },
 	})
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 
 
 	users := services.NewUsersService(db, context.Background())
@@ -35,7 +35,7 @@ func TestUserSetActiveNotExists(t *testing.T) {
 	SetupTeamAndUsers(db, t, "TeamA", []entities.User{
 		{ ID: "user1", Username: "username", IsActive: true },
 	})
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 
 	users := services.NewUsersService(db, context.Background())
 

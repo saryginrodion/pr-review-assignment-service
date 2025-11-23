@@ -12,7 +12,7 @@ import (
 
 func TestTeamsService_CreateAndGet(t *testing.T) {
 	db := SetupTestDB(t)
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 	ctx := context.Background()
 	teams := services.NewTeamsService(db, ctx)
 
@@ -34,7 +34,7 @@ func TestTeamsService_CreateAndGet(t *testing.T) {
 
 func TestTeamsService_CreateTeamAlreadyExists(t *testing.T) {
 	db := SetupTestDB(t)
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 	ctx := context.Background()
 	teams := services.NewTeamsService(db, ctx)
 
@@ -54,7 +54,7 @@ func TestTeamsService_CreateTeamAlreadyExists(t *testing.T) {
 
 func TestTeamsService_CreateUserAlreadyExistsInAnotherTeam(t *testing.T) {
 	db := SetupTestDB(t)
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 	ctx := context.Background()
 	teams := services.NewTeamsService(db, ctx)
 
@@ -73,7 +73,7 @@ func TestTeamsService_CreateUserAlreadyExistsInAnotherTeam(t *testing.T) {
 
 func TestTeamsService_GetNotFound(t *testing.T) {
 	db := SetupTestDB(t)
-	defer CleanUpDb(db)
+	defer CleanUpDB(db)
 	ctx := context.Background()
 	teams := services.NewTeamsService(db, ctx)
 

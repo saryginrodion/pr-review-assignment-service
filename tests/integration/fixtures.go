@@ -29,7 +29,7 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func CleanUpDb(db *gorm.DB) {
+func CleanUpDB(db *gorm.DB) {
 	db.Migrator().DropTable(entities.User{}, entities.Team{})
 }
 
