@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"strconv"
 
 	"github.com/saryginrodion/pr_review_assignment_service/api"
 	"github.com/saryginrodion/pr_review_assignment_service/api/context"
@@ -43,7 +44,7 @@ func main() {
 		DB: db,
 		Logger: logger,
 	})
-	httpServer := api.HttpServer(stack, ":8000")
+	httpServer := api.HttpServer(stack, ":" + strconv.Itoa(env.APP_PORT))
 	swaggerui.SetupSwaggerUI()
 	logger.Info("Starting server on :8000")
 	logger.Error("Error on ListenAndServe", "err", httpServer.ListenAndServe())

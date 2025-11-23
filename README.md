@@ -1,5 +1,17 @@
+# Запуск docker compose
+Чтобы запустить сразу все окружение, достаточно прописать:
+```sh
+docker compose up --build
+```
+Эта команда поднимает БД (Postgres), и запускает проект на [localhost:8000/](localhost:8000/)
+Также сразу же доступен swagger: [localhost:8000/swagger](localhost:8000/swagger)
+
+# Билд
+Сбилдить проект можно скриптом `./build.sh`
+Он создаст папку `target/`, и добавит туда скомпилированный бинарный файл (`main`), и также скопирует директорию с `openapi/openapi.yaml` (для swagger)
+
 # Интеграционные тесты
-Для запуска интеграционных тестов используется `docker-compose.tests.yaml` файл с БД и тесты из `tests/integration`
+Для запуска интеграционных тестов используется `tests.docker-compose.yaml` файл с БД и тесты из `tests/integration`
 
 Команды запуска:
 ```sh

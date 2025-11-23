@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:latest
+    container_name: postgres-integration-tests
     command: ["postgres", "-c", "log_statement=all"]
     restart: always
     environment:
