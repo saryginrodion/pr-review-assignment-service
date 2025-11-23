@@ -16,9 +16,10 @@ docker compose up --build
 # Стресс-тесты
 Для стресс-тестов использовался [locust](https://locust.io/) (файл тестов можно посмотреть в `tests/benchmarks`)
 
-Графики тестов (230+- RPS, проведено на моем компьютере, сервис был поднят с помощью `docker compose up --build`, база данных полностью чистая)
+Графики тестов (230+- RPS, +-10 минут, проведено на моем компьютере, сервис был поднят с помощью `docker compose up --build`, база данных полностью чистая)
 
-<img width="2566" height="1754" alt="image" src="https://github.com/user-attachments/assets/055db668-7a99-4488-b8e2-e917990ff14c" />
+<img width="2566" height="1754" alt="stress test results" src="https://github.com/user-attachments/assets/5a9e05f4-3c8d-412c-ab2f-c6f5c62d1eb4" />
+
 
 
 # Интеграционные тесты
