@@ -75,7 +75,7 @@ var PullRequestReassign = stackable.WrapFunc(
 
 		ctx.Response, _ = stackable.JsonResponse(
 			http.StatusOK,
-			schemas.ToPullRequest(*pr),
+			schemas.ToPullRequestReassignResponse(*pr, body.OldReviewerID),
 		)
 
 		return next()
