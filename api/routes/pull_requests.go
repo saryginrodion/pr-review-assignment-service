@@ -31,7 +31,7 @@ var PullRequestCreate = stackable.WrapFunc(
 
 		ctx.Response, _ = stackable.JsonResponse(
 			http.StatusCreated,
-			schemas.ToPullRequest(*pr),
+			schemas.ToPullRequestResponse(*pr),
 		)
 
 		return next()
@@ -53,7 +53,7 @@ var PullRequestMerge = stackable.WrapFunc(
 
 		ctx.Response, _ = stackable.JsonResponse(
 			http.StatusOK,
-			schemas.ToPullRequest(*pr),
+			schemas.ToPullRequestResponse(*pr),
 		)
 
 		return next()
@@ -75,7 +75,7 @@ var PullRequestReassign = stackable.WrapFunc(
 
 		ctx.Response, _ = stackable.JsonResponse(
 			http.StatusOK,
-			schemas.ToPullRequestReassignResponse(*pr, body.OldReviewerID),
+			schemas.ToPullRequestReassignedResponse(*pr, body.OldReviewerID),
 		)
 
 		return next()

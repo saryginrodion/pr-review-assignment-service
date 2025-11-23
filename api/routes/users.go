@@ -25,7 +25,7 @@ var UserSetIsActive = stackable.WrapFunc(
 
 		ctx.Response, _ = stackable.JsonResponse(
 			http.StatusOK,
-			schemas.ToUser(*user),
+			schemas.ToUserResponse(*user),
 		)
 
 		return next()
