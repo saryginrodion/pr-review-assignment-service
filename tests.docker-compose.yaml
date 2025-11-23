@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:18
     container_name: postgres-integration-tests
     command: ["postgres", "-c", "log_statement=all"]
     restart: always
@@ -11,9 +11,23 @@ services:
     ports:
       - "15432:5432"
     volumes:
-      - .volumes/postgres-tests:/usr/local/pgsql/data
+      - postgres_data_tests:/var/lib/postgresql/18/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tests -d tests"]
       interval: 2s
       timeout: 2s
       retries: 10
+
+    networks:
+      - test-network
+
+volumes:
+  postgres_data_tests:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
+networks:
+  test-network:
+    driver: bridge
