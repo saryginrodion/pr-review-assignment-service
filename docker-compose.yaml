@@ -16,22 +16,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - app-network
 
   backend:
     build:
       context: .
-
     tty: true
-
     environment:
       APP_PORT: 8000
       POSTGRES_DSN: "user=admin password=admin host=postgres port=5432 dbname=admin sslmode=disable"
-
     ports:
       - 8000:8000
-
-
     depends_on:
       postgres:
         condition: service_healthy
         restart: true
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
