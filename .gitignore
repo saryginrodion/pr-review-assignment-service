@@ -1,3 +1,7 @@
+# Стресс тесты используют python
+__pycache__
+.venv
+
 # Binaries for programs and plugins
 *.exe
 *.dll
